@@ -3,13 +3,23 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/jakepearson/password/encoder"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello world!")
+func hashHandler(w http.ResponseWriter, r *http.Request) {
+	password := r.URL.Query().Get("password")
+	fmt.Fprintf(w, encoder.HashAndEncode(password))
+}
+
+func createHandler() http.Handler {
+	h := http.NewServeMux()
+
+	h.HandleFunc("/hash", hashHandler)
+
+	return h
 }
 
 func main() {
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", createHandler())
 }
