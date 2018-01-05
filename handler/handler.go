@@ -9,9 +9,15 @@ import (
 )
 
 func hashHandler(w http.ResponseWriter, r *http.Request) {
+	password := r.URL.Query().Get("password")
+	if password == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Password missing (use password query parameter"))
+		return
+	}
+
 	time.Sleep(5 * time.Second) //Slow down request to meet requirement
 
-	password := r.URL.Query().Get("password")
 	fmt.Fprintf(w, encoder.HashAndEncode(password))
 }
 
