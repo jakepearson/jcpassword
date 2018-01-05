@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/jakepearson/jcpassword/encoder"
 )
@@ -20,6 +22,15 @@ func createHandler() http.Handler {
 	return h
 }
 
+func port() int {
+	value, exists := os.LookupEnv("PORT")
+	if !exists {
+		return 8080
+	}
+	port, _ := strconv.Atoi(value)
+	return port
+}
+
 func main() {
-	http.ListenAndServe(":8080", createHandler())
+	http.ListenAndServe(fmt.Sprintf(":%d", port()), createHandler())
 }
