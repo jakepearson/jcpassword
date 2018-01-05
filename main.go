@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/jakepearson/password/encoder"
+	"github.com/jakepearson/jcpassword/encoder"
 )
 
 func hashHandler(w http.ResponseWriter, r *http.Request) {
