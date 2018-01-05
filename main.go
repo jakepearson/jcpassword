@@ -6,21 +6,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/jakepearson/jcpassword/encoder"
+	"github.com/jakepearson/jcpassword/handler"
 )
-
-func hashHandler(w http.ResponseWriter, r *http.Request) {
-	password := r.URL.Query().Get("password")
-	fmt.Fprintf(w, encoder.HashAndEncode(password))
-}
-
-func createHandler() http.Handler {
-	h := http.NewServeMux()
-
-	h.HandleFunc("/hash", hashHandler)
-
-	return h
-}
 
 func port() int {
 	value, exists := os.LookupEnv("PORT")
@@ -32,5 +19,5 @@ func port() int {
 }
 
 func main() {
-	http.ListenAndServe(fmt.Sprintf(":%d", port()), createHandler())
+	http.ListenAndServe(fmt.Sprintf(":%d", port()), handler.Create())
 }

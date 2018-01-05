@@ -6,6 +6,9 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
+
+	"github.com/jakepearson/jcpassword/handler"
 )
 
 func createHashRequest(password string) *http.Request {
@@ -17,11 +20,17 @@ func createHashRequest(password string) *http.Request {
 }
 
 func TestHashAPI(t *testing.T) {
-	handler := createHandler()
+	handler := handler.Create()
 	request := createHashRequest("angryMonkey")
 
 	response := httptest.NewRecorder()
+	startTime := time.Now()
 	handler.ServeHTTP(response, request)
+
+	finishTime := time.Now()
+	if finishTime.Sub(startTime).Seconds() < 5 {
+		t.Errorf("Request was faster than 5 seconds")
+	}
 
 	expected := "ZEHhWB65gUlzdVwtDQArEyx+KVLzp/aTaRaPlBzYRIFj6vjFdqEb0Q5B8zVKCZ0vKbZPZklJz0Fd7su2A+gf7Q=="
 	if response.Code != 200 {
