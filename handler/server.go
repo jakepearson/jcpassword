@@ -5,6 +5,13 @@ import (
 	"net/http"
 )
 
+//Statistics holds metrics information about the server
+type Statistics struct {
+	TotalRequests       uint64
+	totalResponseMS     uint64
+	AverageResponseTime uint64
+}
+
 //Hash contains the a hash string and whether it is complete
 type Hash struct {
 	ID       int
@@ -21,6 +28,7 @@ type WebServer struct {
 	Server                *http.Server
 	Handler               *http.Handler
 	Hashes                map[int]*Hash
+	Statistics            *Statistics
 }
 
 func slashHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,10 +38,10 @@ func slashHandler(w http.ResponseWriter, r *http.Request) {
 func createHandler(webServer *WebServer) http.Handler {
 	h := http.NewServeMux()
 
-	h.HandleFunc("/healthcheck", slashHandler)
 	h.HandleFunc("/hash", hashHandler(webServer))
 	h.HandleFunc("/hash/", hashHandler(webServer))
 	h.HandleFunc("/shutdown", shutdownHandler(webServer))
+	h.HandleFunc("/stats", statsHandler(webServer))
 
 	return h
 }
@@ -49,6 +57,7 @@ func CreateServer(port int, killProcessOnShutdown bool, sleepSeconds int) *WebSe
 		Port:                  port,
 		Server:                server,
 		Hashes:                make(map[int]*Hash),
+		Statistics:            &Statistics{},
 	}
 	handler := createHandler(webServer)
 	webServer.Handler = &handler
