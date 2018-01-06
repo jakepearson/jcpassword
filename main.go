@@ -18,7 +18,7 @@ func port() int {
 	return port
 }
 
-func startServer() {
+func startServer() *handler.WebServer {
 	webServer := handler.CreateServer(port(), true, 5)
 
 	go func() {
@@ -27,6 +27,8 @@ func startServer() {
 			fmt.Printf("Httpserver: ListenAndServe() error: %s\n", err)
 		}
 	}()
+
+	return webServer
 }
 
 func main() {
