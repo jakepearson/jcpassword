@@ -14,13 +14,16 @@ func hashGetHandler(webServer *WebServer, w http.ResponseWriter, r *http.Request
 	hashID, e := strconv.Atoi(path.Base(r.URL.Path))
 	if e != nil {
 		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 	hash := webServer.Hashes[hashID]
 	if hash == nil {
 		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 	if !hash.Complete {
 		w.WriteHeader(http.StatusProcessing)
+		return
 	}
 	fmt.Fprint(w, hash.Value)
 }

@@ -65,7 +65,19 @@ func TestHashRoute(t *testing.T) {
 	}
 }
 
-func TestGetUnknownHashId(t *testing.T) {
+func TestGetBadHashId(t *testing.T) {
+	hashID := 1234
+	hashURI := fmt.Sprintf("/hash/%d", hashID)
+
+	readHashRequest, _ := http.NewRequest("GET", hashURI, nil)
+	readHashResponse := executeRequest(readHashRequest)
+
+	if readHashResponse.Code != http.StatusNotFound {
+		t.Errorf("Wrong code returned: %d", readHashResponse.Code)
+	}
+}
+
+func TestInvalidHashId(t *testing.T) {
 	hashID := "invalidID"
 	hashURI := fmt.Sprintf("/hash/%s", hashID)
 
