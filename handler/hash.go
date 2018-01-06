@@ -14,15 +14,18 @@ func hashGetHandler(webServer *WebServer, w http.ResponseWriter, r *http.Request
 	hashID, e := strconv.Atoi(path.Base(r.URL.Path))
 	if e != nil {
 		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "Invalid ID")
 		return
 	}
 	hash := webServer.Hashes[hashID]
 	if hash == nil {
 		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "Invalid ID")
 		return
 	}
 	if !hash.Complete {
 		w.WriteHeader(http.StatusProcessing)
+		fmt.Fprintf(w, "Processing in progress")
 		return
 	}
 	fmt.Fprint(w, hash.Value)
