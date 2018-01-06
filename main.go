@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"strconv"
 	"sync"
@@ -19,21 +18,15 @@ func port() int {
 	return port
 }
 
-func startServer() *http.Server {
-	server := &http.Server{
-		Addr: fmt.Sprintf(":%d", port()),
-	}
-
-	server.Handler = handler.Create(server)
+func startServer() {
+	webServer := handler.CreateServer(port(), true, 5)
 
 	go func() {
-		fmt.Printf("Listening at %s\n", server.Addr)
-		if err := server.ListenAndServe(); err != nil {
+		fmt.Printf("Listening at %s\n", webServer.Server.Addr)
+		if err := webServer.Server.ListenAndServe(); err != nil {
 			fmt.Printf("Httpserver: ListenAndServe() error: %s\n", err)
 		}
 	}()
-
-	return server
 }
 
 func main() {
@@ -41,5 +34,4 @@ func main() {
 	wg.Add(1)
 	startServer()
 	wg.Wait()
-	fmt.Println("Falling off the end")
 }

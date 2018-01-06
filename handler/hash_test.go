@@ -9,9 +9,12 @@ import (
 	"time"
 )
 
+const sleepSeconds = 1
+
 func executeRequest(request *http.Request) *httptest.ResponseRecorder {
-	handler := Create(&http.Server{})
+	server := CreateServer(8080, false, sleepSeconds)
 	response := httptest.NewRecorder()
+	handler := *server.Handler
 	handler.ServeHTTP(response, request)
 	return response
 }
@@ -32,8 +35,8 @@ func TestHashRoute(t *testing.T) {
 	response := executeHashRequest(&password)
 
 	finishTime := time.Now()
-	if finishTime.Sub(startTime).Seconds() < 5 {
-		t.Errorf("Request was faster than 5 seconds")
+	if finishTime.Sub(startTime).Seconds() < sleepSeconds {
+		t.Errorf("Request was faster than %d seconds", sleepSeconds)
 	}
 
 	if response.Code != 200 {
