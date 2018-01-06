@@ -10,9 +10,9 @@ import (
 )
 
 func port() int {
-	value, exists := os.LookupEnv("PORT")
+	value, exists := os.LookupEnv("PORT") // Heroku port environment variable
 	if !exists {
-		return 8080
+		return 8080 // Default port if environment variable not set
 	}
 	port, _ := strconv.Atoi(value)
 	return port

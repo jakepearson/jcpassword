@@ -10,7 +10,9 @@ import (
 	"github.com/jakepearson/jcpassword/encoder"
 )
 
+//WebServer contains all fields of the server to allow easier testing and multiple instances of the server if needed
 type WebServer struct {
+	Closed                bool
 	Port                  int
 	KillProcessOnShutdown bool
 	SleepSeconds          int
@@ -42,15 +44,15 @@ func shutdownProcess(server *WebServer) {
 		fmt.Printf("Shutting down service in %d seconds\n", server.SleepSeconds-i)
 		time.Sleep(1 * time.Second)
 	}
-	os.Exit(0)
+
+	server.Closed = true
+	if server.KillProcessOnShutdown {
+		os.Exit(0)
+	}
 }
 
 func shutdownHandler(webServer *WebServer) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
 		go shutdownProcess(webServer)
 		webServer.Server.Shutdown(context.Background())
 	}
@@ -70,6 +72,7 @@ func CreateServer(port int, killProcessOnShutdown bool, sleepSeconds int) *WebSe
 	server := &http.Server{
 		Addr: fmt.Sprintf(":%d", port)}
 	webServer := &WebServer{
+		Closed:                false,
 		KillProcessOnShutdown: killProcessOnShutdown,
 		SleepSeconds:          sleepSeconds,
 		Port:                  port,
