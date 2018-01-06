@@ -12,7 +12,7 @@ type Statistics struct {
 	AverageResponseTime uint64
 }
 
-//Hash contains the a hash string and whether it is complete
+//Hash contains a hash string and whether it is complete
 type Hash struct {
 	ID       int
 	Complete bool
