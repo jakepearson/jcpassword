@@ -10,7 +10,7 @@ func TestEnsureServerStarts(t *testing.T) {
 	webServer := startServer()
 	defer webServer.Server.Shutdown(context.Background())
 
-	url := fmt.Sprintf("http://localhost:%d/", port())
+	url := fmt.Sprintf("http://localhost:%d/healthcheck", port())
 	response, e := http.Get(url)
 
 	if e != nil {

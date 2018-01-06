@@ -11,8 +11,9 @@ import (
 
 const sleepSeconds = 1
 
+var server = CreateServer(8080, false, sleepSeconds)
+
 func executeRequest(request *http.Request) *httptest.ResponseRecorder {
-	server := CreateServer(8080, false, sleepSeconds)
 	response := httptest.NewRecorder()
 	handler := *server.Handler
 	handler.ServeHTTP(response, request)
@@ -30,23 +31,49 @@ func executeHashRequest(password *string) *httptest.ResponseRecorder {
 }
 
 func TestHashRoute(t *testing.T) {
-	startTime := time.Now()
 	password := "angryMonkey"
 	response := executeHashRequest(&password)
-
-	finishTime := time.Now()
-	if finishTime.Sub(startTime).Seconds() < sleepSeconds {
-		t.Errorf("Request was faster than %d seconds", sleepSeconds)
-	}
 
 	if response.Code != 200 {
 		t.Errorf("Wrong code returned: %d", response.Code)
 	}
 
-	body := response.Body.String()
+	hashID := response.Body.String()
+	hashURI := fmt.Sprintf("/hash/%s", hashID)
+
+	time.Sleep(500 * time.Millisecond) // Sleep for half the time of the processing
+	readHashRequest, _ := http.NewRequest("GET", hashURI, nil)
+	readHashResponse := executeRequest(readHashRequest)
+
+	if readHashResponse.Code != http.StatusProcessing {
+		t.Errorf("Request should still be processing: %d", readHashResponse.Code)
+	}
+
+	time.Sleep(600 * time.Millisecond) // Sleep until processing is complete
+
+	readHashRequest, _ = http.NewRequest("GET", hashURI, nil)
+	readHashResponse = executeRequest(readHashRequest)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Wrong code returned: %d", response.Code)
+	}
+
+	body := readHashResponse.Body.String()
 	expected := "ZEHhWB65gUlzdVwtDQArEyx+KVLzp/aTaRaPlBzYRIFj6vjFdqEb0Q5B8zVKCZ0vKbZPZklJz0Fd7su2A+gf7Q=="
 	if body != expected {
 		t.Errorf("Wrong hash returned: %s", body)
+	}
+}
+
+func TestGetUnknownHashId(t *testing.T) {
+	hashID := "invalidID"
+	hashURI := fmt.Sprintf("/hash/%s", hashID)
+
+	readHashRequest, _ := http.NewRequest("GET", hashURI, nil)
+	readHashResponse := executeRequest(readHashRequest)
+
+	if readHashResponse.Code != http.StatusNotFound {
+		t.Errorf("Wrong code returned: %d", readHashResponse.Code)
 	}
 }
 
@@ -81,7 +108,7 @@ func TestWrongMethod(t *testing.T) {
 	params := make(url.Values)
 	params.Add("password", "test")
 	uri := fmt.Sprintf("%s?%s", "/hash", params.Encode())
-	request, _ := http.NewRequest("GET", uri, nil)
+	request, _ := http.NewRequest("PATCH", uri, nil)
 	response := executeRequest(request)
 
 	if response.Code != http.StatusNotFound {

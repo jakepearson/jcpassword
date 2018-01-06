@@ -5,6 +5,13 @@ import (
 	"net/http"
 )
 
+//Hash contains the a hash string and whether it is complete
+type Hash struct {
+	ID       int
+	Complete bool
+	Value    string
+}
+
 //WebServer contains all fields of the server to allow easier testing and multiple instances of the server if needed
 type WebServer struct {
 	Closed                bool
@@ -13,25 +20,19 @@ type WebServer struct {
 	SleepSeconds          int
 	Server                *http.Server
 	Handler               *http.Handler
+	Hashes                map[int]*Hash
 }
 
 func slashHandler(w http.ResponseWriter, r *http.Request) {
-	html := `<html>
-	<head>
-	<title>Password Hasher</title>
-	</head>
-	<body>
-	<img src="https://azure.microsoft.com/svghandler/security-center?width=600&height=315">
-	</body>
-	</html>`
-	fmt.Fprintf(w, html)
+	fmt.Fprintf(w, "OK")
 }
 
 func createHandler(webServer *WebServer) http.Handler {
 	h := http.NewServeMux()
 
-	h.HandleFunc("/", slashHandler)
+	h.HandleFunc("/healthcheck", slashHandler)
 	h.HandleFunc("/hash", hashHandler(webServer))
+	h.HandleFunc("/hash/", hashHandler(webServer))
 	h.HandleFunc("/shutdown", shutdownHandler(webServer))
 
 	return h
@@ -47,6 +48,7 @@ func CreateServer(port int, killProcessOnShutdown bool, sleepSeconds int) *WebSe
 		SleepSeconds:          sleepSeconds,
 		Port:                  port,
 		Server:                server,
+		Hashes:                make(map[int]*Hash),
 	}
 	handler := createHandler(webServer)
 	webServer.Handler = &handler
