@@ -56,7 +56,6 @@ func hashPostHandler(webServer *WebServer, w http.ResponseWriter, r *http.Reques
 
 func hashHandler(webServer *WebServer) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		startTime := time.Now()
 		switch r.Method {
 		case "GET":
 			hashGetHandler(webServer, w, r)
@@ -65,10 +64,5 @@ func hashHandler(webServer *WebServer) func(w http.ResponseWriter, r *http.Reque
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
-
-		responseTimeMS := time.Now().Sub(startTime) / time.Millisecond
-		webServer.Statistics.TotalRequests++
-		webServer.Statistics.totalResponseMS += uint64(responseTimeMS)
-		webServer.Statistics.AverageResponseTime = webServer.Statistics.totalResponseMS / webServer.Statistics.TotalRequests
 	}
 }

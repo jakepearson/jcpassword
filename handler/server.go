@@ -3,13 +3,14 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"time"
 )
 
 //Statistics holds metrics information about the server
 type Statistics struct {
-	TotalRequests       uint64
-	totalResponseMS     uint64
-	AverageResponseTime uint64
+	TotalRequests         uint64
+	totalResponseTime     time.Duration
+	AverageResponseTimeMS float32
 }
 
 //Hash contains a hash string and whether it is complete
@@ -43,7 +44,22 @@ func createHandler(webServer *WebServer) http.Handler {
 	h.HandleFunc("/shutdown", shutdownHandler(webServer))
 	h.HandleFunc("/stats", statsHandler(webServer))
 
-	return h
+	return statsMiddleware(webServer, h)
+}
+
+func statsMiddleware(webServer *WebServer, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		startTime := time.Now()
+
+		next.ServeHTTP(w, r)
+
+		responseTime := time.Now().Sub(startTime)
+		webServer.Statistics.TotalRequests++
+		webServer.Statistics.totalResponseTime += responseTime
+		totalResponseMS := float32(webServer.Statistics.totalResponseTime / time.Millisecond)
+		//		webServer.Statistics.totalResponseMS
+		webServer.Statistics.AverageResponseTimeMS = totalResponseMS / float32(webServer.Statistics.TotalRequests)
+	})
 }
 
 // CreateServer will return an instance of a webserver (does not open a port)
