@@ -32,10 +32,7 @@ type WebServer struct {
 	Statistics            *Statistics
 }
 
-func slashHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "OK")
-}
-
+//createHandler sets up the routes for the web server to serve
 func createHandler(webServer *WebServer) http.Handler {
 	h := http.NewServeMux()
 
@@ -45,21 +42,6 @@ func createHandler(webServer *WebServer) http.Handler {
 	h.HandleFunc("/stats", statsHandler(webServer))
 
 	return statsMiddleware(webServer, h)
-}
-
-func statsMiddleware(webServer *WebServer, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		startTime := time.Now()
-
-		next.ServeHTTP(w, r)
-
-		responseTime := time.Now().Sub(startTime)
-		webServer.Statistics.TotalRequests++
-		webServer.Statistics.totalResponseTime += responseTime
-		totalResponseMS := float32(webServer.Statistics.totalResponseTime / time.Millisecond)
-		//		webServer.Statistics.totalResponseMS
-		webServer.Statistics.AverageResponseTimeMS = totalResponseMS / float32(webServer.Statistics.TotalRequests)
-	})
 }
 
 // CreateServer will return an instance of a webserver (does not open a port)

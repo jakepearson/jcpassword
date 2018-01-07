@@ -9,6 +9,8 @@ import (
 	"github.com/jakepearson/jcpassword/handler"
 )
 
+//port will get the port to use from an environment variable.
+//if the environent is not set the port will be `8080``
 func port() int {
 	value, exists := os.LookupEnv("PORT") // Heroku port environment variable
 	if !exists {
@@ -18,6 +20,8 @@ func port() int {
 	return port
 }
 
+//startServer will create an instance of the `webServer` object then
+//open a listener in the background
 func startServer() *handler.WebServer {
 	webServer := handler.CreateServer(port(), true, 5)
 
@@ -31,6 +35,8 @@ func startServer() *handler.WebServer {
 	return webServer
 }
 
+//main will create a wait group, start the server
+//then wait for the waitgroup to complete (which will never happen)
 func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)

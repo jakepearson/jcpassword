@@ -10,6 +10,10 @@ import (
 	"github.com/jakepearson/jcpassword/encoder"
 )
 
+//hasGetHandler accepts a request to convert an id into a completed hash
+//if the id is not in the "database", it will return `StatusNotFound`
+//if the id is in the "database", but the hash isn't ready the handler will return `StatusProcessing`
+//if the id is in the "database", and the hash is ready, the hash will be returned
 func hashGetHandler(webServer *WebServer, w http.ResponseWriter, r *http.Request) {
 	hashID, e := strconv.Atoi(path.Base(r.URL.Path))
 	if e != nil {
@@ -31,6 +35,9 @@ func hashGetHandler(webServer *WebServer, w http.ResponseWriter, r *http.Request
 	fmt.Fprint(w, hash.Value)
 }
 
+//hashPostHandler accepts a request to process a password
+//It kicks off the background job to generate the hash and returns an id that can be used to lookup
+//the hash at a future time
 func hashPostHandler(webServer *WebServer, w http.ResponseWriter, r *http.Request) {
 	password := r.URL.Query().Get("password")
 	if password == "" {
