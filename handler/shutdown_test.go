@@ -8,7 +8,7 @@ import (
 )
 
 func TestShutdownHandler(t *testing.T) {
-	server := CreateServer(8080, false, sleepSeconds)
+	server := CreateServer(8080, sleepSeconds)
 	request, _ := http.NewRequest("GET", "/shutdown", nil)
 	response := httptest.NewRecorder()
 	handler := *server.Handler

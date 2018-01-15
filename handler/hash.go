@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 	"time"
@@ -21,36 +24,70 @@ func hashGetHandler(webServer *WebServer, w http.ResponseWriter, r *http.Request
 		fmt.Fprintf(w, "Invalid ID")
 		return
 	}
-	hash := webServer.Hashes[hashID]
-	if hash == nil {
+	hashReference, hasKey := webServer.Hashes.Load(hashID)
+	if !hasKey {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "Invalid ID")
 		return
 	}
+	hash, isHash := hashReference.(*Hash)
+	if !isHash {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "Wrong type stored in hashes")
+	}
 	if !hash.Complete {
-		w.WriteHeader(http.StatusProcessing)
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "Processing in progress")
 		return
 	}
 	fmt.Fprint(w, hash.Value)
 }
 
+//getNextID will grab the idLock, increment the id, release the lock then return the new id
+func getNextID(webServer *WebServer) int {
+	webServer.idLock.Lock()
+	webServer.nextID++
+	result := webServer.nextID
+	webServer.idLock.Unlock()
+	return result
+}
+
+//getPasswordInput will read the body from the request and parse it as a query string
+func getPasswordInput(r *http.Request) (string, error) {
+	if r.Body == nil {
+		return "", errors.New("No body defined")
+	}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return "", err
+	}
+	parameters, err := url.ParseQuery(string(body))
+	if err != nil {
+		return "", err
+	}
+	password := parameters.Get("password")
+	if password == "" {
+		return "", errors.New("Password not set")
+	}
+	return password, nil
+}
+
 //hashPostHandler accepts a request to process a password
 //It kicks off the background job to generate the hash and returns an id that can be used to lookup
 //the hash at a future time
 func hashPostHandler(webServer *WebServer, w http.ResponseWriter, r *http.Request) {
-	password := r.URL.Query().Get("password")
-	if password == "" {
+	password, error := getPasswordInput(r)
+	if error != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Password missing (use password query parameter)")
+		fmt.Fprintf(w, "Bad post body: %v", error)
 		return
 	}
 
 	hash := Hash{
-		ID:       len(webServer.Hashes),
+		ID:       getNextID(webServer),
 		Complete: false,
 	}
-	webServer.Hashes[hash.ID] = &hash
+	webServer.Hashes.Store(hash.ID, &hash)
 
 	go func() {
 		time.Sleep(time.Duration(webServer.SleepSeconds) * time.Second) //Slow down request to meet requirement
@@ -62,7 +99,7 @@ func hashPostHandler(webServer *WebServer, w http.ResponseWriter, r *http.Reques
 }
 
 func hashHandler(webServer *WebServer) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return statsMiddleware(webServer, func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
 			hashGetHandler(webServer, w, r)
@@ -71,5 +108,5 @@ func hashHandler(webServer *WebServer) func(w http.ResponseWriter, r *http.Reque
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
-	}
+	})
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +12,7 @@ import (
 
 const sleepSeconds = 1
 
-var server = CreateServer(8080, false, sleepSeconds)
+var server = CreateServer(5678, sleepSeconds)
 
 func executeRequest(request *http.Request) *httptest.ResponseRecorder {
 	response := httptest.NewRecorder()
@@ -25,8 +26,8 @@ func executeHashRequest(password *string) *httptest.ResponseRecorder {
 	if password != nil {
 		params.Add("password", *password)
 	}
-	uri := fmt.Sprintf("%s?%s", "/hash", params.Encode())
-	request, _ := http.NewRequest("POST", uri, nil)
+	uri := "/hash"
+	request, _ := http.NewRequest("POST", uri, bytes.NewBufferString(params.Encode()))
 	return executeRequest(request)
 }
 
@@ -34,7 +35,7 @@ func TestHashRoute(t *testing.T) {
 	password := "angryMonkey"
 	response := executeHashRequest(&password)
 
-	if response.Code != 200 {
+	if response.Code != http.StatusOK {
 		t.Errorf("Wrong code returned: %d", response.Code)
 	}
 
@@ -45,7 +46,7 @@ func TestHashRoute(t *testing.T) {
 	readHashRequest, _ := http.NewRequest("GET", hashURI, nil)
 	readHashResponse := executeRequest(readHashRequest)
 
-	if readHashResponse.Code != http.StatusProcessing {
+	if readHashResponse.Code != http.StatusBadRequest {
 		t.Errorf("Request should still be processing: %d", readHashResponse.Code)
 	}
 
@@ -96,7 +97,7 @@ func TestHashRouteMissingParameter(t *testing.T) {
 	}
 
 	body := response.Body.String()
-	expected := "Password missing (use password query parameter)"
+	expected := "Bad post body: Password not set"
 	if body != expected {
 		t.Errorf("Wrong error returned: %s", body)
 	}
@@ -110,7 +111,7 @@ func TestHashRouteBlankParameter(t *testing.T) {
 	}
 
 	body := response.Body.String()
-	expected := "Password missing (use password query parameter)"
+	expected := "Bad post body: Password not set"
 	if body != expected {
 		t.Errorf("Wrong error returned: %s", body)
 	}

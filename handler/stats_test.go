@@ -17,7 +17,7 @@ func executeIsolatedRequest(webServer *WebServer, uri string) *httptest.Response
 }
 
 func TestStatsEndpoint(t *testing.T) {
-	var server = CreateServer(8080, false, sleepSeconds)
+	var server = CreateServer(1234, sleepSeconds)
 	for i := 0; i < 10; i++ {
 		executeIsolatedRequest(server, "/hash?password=test")
 	}
@@ -33,7 +33,7 @@ func TestStatsEndpoint(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &responseData); err != nil {
 		t.Errorf("Invalid JSON: %v", err)
 	}
-	totalRequests := responseData["TotalRequests"]
+	totalRequests := responseData["total"]
 	fmt.Printf("Stats: %v\n", responseData)
 	if totalRequests != 10.0 {
 		t.Errorf("Total Response Count Invalid: %d", totalRequests)

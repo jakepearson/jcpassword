@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"sync"
 
 	"github.com/jakepearson/jcpassword/handler"
 )
@@ -23,7 +22,7 @@ func port() int {
 //startServer will create an instance of the `webServer` object then
 //open a listener in the background
 func startServer() *handler.WebServer {
-	webServer := handler.CreateServer(port(), true, 5)
+	webServer := handler.CreateServer(port(), 5)
 
 	go func() {
 		fmt.Printf("Listening at %s\n", webServer.Server.Addr)
@@ -38,8 +37,6 @@ func startServer() *handler.WebServer {
 //main will create a wait group, start the server
 //then wait for the waitgroup to complete (which will never happen)
 func main() {
-	var wg sync.WaitGroup
-	wg.Add(1)
-	startServer()
-	wg.Wait()
+	webServer := startServer()
+	<-webServer.ShutdownChan // Exit process when a message shows on the channel
 }

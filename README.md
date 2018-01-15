@@ -14,10 +14,10 @@ Service to support requesting a password hash that can be retrieved on a separat
 
 # Routes
 
-* `/hash` (POST): Request that a string is hashed with `SHA512` and `base64` encoded. To use, call to the endpoind with a `password` field defined in the query string. A `HashID` is returned that can be used to lookup the final result.
-* `/hash/<HashID>` (GET): Request for the final result of the hash and encode operation. If the operation is complete, a status code of `200` will be returned with the hashed and encoded string in the body of the response. If the operation is not yet complete, a status code of `102` (Still Processing) will return with a message.
+* `/hash` (POST): Request that a string is hashed with `SHA512` and `base64` encoded. To use, call to the endpoint with a body of the format `password=<your-password>`A `HashID` is returned that can be used to lookup the final result.
+* `/hash/<HashID>` (GET): Request for the final result of the hash and encode operation. If the operation is complete, a status code of `200` will be returned with the hashed and encoded string in the body of the response. If the operation is not yet complete, a status code of `400` (Bad request) will return with a message.
 * `/shutdown` (GET): Request for the service to shutdown. The service will stop accepting requests, complete any open requests, and finally shutdown the process after `5` seconds.
-* `/metrics` (GET): Request for simple metrics about the service. Returns a `json` string with fields for `TotalRequests` and `AverageResponseTime` in milliseconds.
+* `/metrics` (GET): Request for simple metrics about the service. Returns a `json` string with fields for `total` and `average` in milliseconds.
 
 # Future upgrades
 

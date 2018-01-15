@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -17,9 +16,7 @@ func shutdownProcess(server *WebServer) {
 	}
 
 	server.Closed = true
-	if server.KillProcessOnShutdown {
-		os.Exit(0)
-	}
+	server.ShutdownChan <- 0
 }
 
 //shutdownHandler will call the "graceful" shutdown method of the listener then run a background job

@@ -8,11 +8,11 @@ import (
 )
 
 //statsMiddleware captures the start and end time of each request and updates the `Statistics` object
-func statsMiddleware(webServer *WebServer, next http.Handler) http.Handler {
+func statsMiddleware(webServer *WebServer, handler func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		startTime := time.Now()
 
-		next.ServeHTTP(w, r)
+		handler(w, r)
 
 		responseTime := time.Now().Sub(startTime)
 		webServer.Statistics.TotalRequests++
